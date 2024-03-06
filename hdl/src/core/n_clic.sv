@@ -70,12 +70,13 @@ module n_clic
 
   // generate vector table
   /* verilator lint_off UNOPTFLAT */
-  logic   [         PrioWidth-1:0] max_prio[VecSize];
-  logic   [(IMemAddrWidth -2)-1:0] max_vec [VecSize];
-  logic                            is_int  [VecSize];
+  logic   [         PrioWidth-1:0] max_prio    [VecSize];
+  logic   [(IMemAddrWidth -2)-1:0] max_vec     [VecSize];
+  logic                            is_int      [VecSize];
 
-  entry_t                          entry   [VecSize];
-  logic   [         PrioWidth-1:0] prio    [VecSize];
+  entry_t                          entry       [VecSize];
+  logic   [         PrioWidth-1:0] prio        [VecSize];
+  logic   [(IMemAddrWidth -2)-1:0] csr_vec_data[VecSize];
   generate
     logic [31:0] temp_vec[VecSize];
     word temp_entry[VecSize];
@@ -109,25 +110,26 @@ module n_clic
           // out
           .out(temp_entry[k])
       );
-
+      assign entry[k] = csr_entry.data;  //gen_vec[k].csr_entry.data;
+      assign prio[k] = entry[k].prio;  // a bit of a hack to please Verilator
+      assign csr_vec_data[k] = csr_vec.data;
       // one hot encoding, only one match allowedallowed
       assign out = (csr_addr == 12'(VecCsrBase + k)) ? temp_vec[k] : 'z;
       assign out = (csr_addr == 12'(EntryCsrBase + k)) ? temp_entry[k] : 'z;
       assign ext_write_enable = 0;  // these should not be written as of now
       assign ext_vec_data = 0;  // these should not be written as of now
       assign ext_entry_data = 0;  // these should not be written as of now
-
-      // stupid implementation to find max priority
-      always_comb begin
-        entry[k] = gen_vec[k].csr_entry.data;
-        prio[k]  = entry[k].prio;  // a bit of a hack to please Verilator
-
+    end
+    // stupid implementation to find max priority
+    always_comb begin
+      //const integer k;
+      for (integer k = 0; k < VecSize; k = k + 1) begin
         // find highest priority interrupt
         if (k == 0) begin
           if (entry[k].enabled && entry[k].pended && (prio[k] > m_int_thresh.data)) begin
             is_int[0]   = 1;
             max_prio[0] = prio[k];
-            max_vec[0]  = gen_vec[k].csr_vec.data;
+            max_vec[0]  = csr_vec_data[k];  // gen_vec[k].csr_vec.data;
           end else begin
             is_int[0]   = 0;
             max_prio[0] = m_int_thresh.data;
@@ -137,7 +139,7 @@ module n_clic
           if (entry[k].enabled && entry[k].pended && (prio[k] > max_prio[k-1])) begin
             is_int[k]   = 1;
             max_prio[k] = prio[k];
-            max_vec[k]  = gen_vec[k].csr_vec.data;
+            max_vec[k]  = csr_vec_data[k];  //gen_vec[k].csr_vec.data;
           end else begin
             is_int[k]   = is_int[k-1];
             max_prio[k] = max_prio[k-1];
@@ -146,7 +148,6 @@ module n_clic
         end
       end
     end
-
     always_comb begin
       // check return from interrupt condition
       if (pc_in == ~(IMemAddrWidth'(0)) && is_int[VecSize-1]) begin
