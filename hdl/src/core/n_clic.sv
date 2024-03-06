@@ -78,7 +78,7 @@ module n_clic
   logic   [         PrioWidth-1:0] prio        [VecSize];
   logic   [(IMemAddrWidth -2)-1:0] csr_vec_data[VecSize];
   generate
-    logic [31:0] temp_vec[VecSize];
+    word temp_vec[VecSize];
     word temp_entry[VecSize];
 
     // automatically connected
