@@ -9,7 +9,7 @@ typedef enum integer {
 //Denies read/write access to memory if outside task's stack
 //Can be granted access to memory outside stack if specified by csr
 module mpu#(
-    parameter integer unsigned maps = 8,  // Number of configurations
+    parameter integer unsigned maps = 9,  // Number of configurations (8 interrupts + 1 memory exception)
     parameter integer unsigned rows = 4
 ) (
     input logic clk,
@@ -19,7 +19,7 @@ module mpu#(
     input logic [15:0] sp,
     input logic [6:0] op,
     input logic [7:0] interrupt_prio,
-    input logic [2:0] id, 
+    input logic [3:0] id, 
 
     // csr registers
     input logic     csr_enable,
@@ -80,51 +80,66 @@ endgenerate
 
 mpu_addr_t current_map[rows];
 
-assign current_map   = mpu_addr_map[id];
+//assign current_map   = mpu_addr_map[id];
 
-bit [15:0] ep_vec[7:0];
+bit [15:0] ep_vec[8:0];
 bit [15:0] ep;
 logic [7:0] last_prio;
 
 
-logic [15:0] top_addr[rows];
-logic [15:0] bot_addr[rows];
-logic read_en[rows];
-logic write_en[rows];
+logic [15:0] top_addr;
+logic [15:0] bot_addr;
+logic read_en;
+logic write_en;
 logic valid_access;
 logic below_ep;
-
-always_comb begin
+always_ff @(posedge clk) begin
     if (reset) begin
-        ep_vec[id] = '{default: '0};
-        last_prio = '0;
+        //ep_vec[id] <= '{default: '0};
+        ep_vec <= '{default: '0};
+        last_prio <= '0;
+        //skip <= 0;
     end
-
-    if (interrupt_prio != last_prio) begin
-        ep_vec[id] = sp;
-        last_prio = interrupt_prio;
+    // push
+    if (interrupt_prio > last_prio) begin
+        ep_vec[id] <= sp;
+        ep <= sp;
     end
-    ep = ep_vec[id];
-    valid_access = 0;
+    // pop
+    if (interrupt_prio < last_prio) begin 
+        ep <= ep_vec[id];
+    end
+    current_map <= mpu_addr_map[id];
+    last_prio <= interrupt_prio;
+    
     below_ep = addr < ep;
+    valid_access = 0;
     
     for (integer k = 0; k < rows; k++ ) begin
-        bot_addr[k] = {current_map[k].addr, 2'b00};
-        top_addr[k] = bot_addr[k] + current_map[k].length;
-        read_en[k]  = current_map[k].read_en;
-        write_en[k] = current_map[k].write_en;
-        
-        if ( top_addr[k] >= addr && bot_addr[k] <= addr) begin
+        bot_addr = {current_map[k].addr, 2'b00};
+        top_addr = bot_addr + current_map[k].length;
+        read_en  = current_map[k].read_en;
+        write_en = current_map[k].write_en;
+        if ( top_addr >= addr && bot_addr <= addr) begin
             case (op)
-                OP_LOAD: valid_access |= read_en[k];
-                OP_STORE: valid_access |= write_en[k];
+                OP_LOAD: valid_access |= read_en;
+                OP_STORE: valid_access |= write_en;
                 default: valid_access = 0;
             endcase 
-        end
-        
+            //break;
+        end   
     end
     
-    mem_fault_out = !(below_ep == valid_access) && (OP_LOAD == op || OP_STORE == op);
+    
+    mem_fault_out <= (!(below_ep == valid_access)) && ((op == OP_LOAD) || (op == OP_STORE));
+end
+
+always_comb begin
+
+
+    //valid_access = valid_arr != 0;
+    //mem_fault_out = (below_ep || !valid_access) && ((op == OP_LOAD) || (op == OP_STORE));
+    
  
 end
 endmodule
