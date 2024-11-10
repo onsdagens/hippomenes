@@ -10,7 +10,8 @@ typedef enum integer {
 //Can be granted access to memory outside stack if specified by csr
 module mpu#(
     parameter integer unsigned maps = 9,  // Number of configurations (8 interrupts + 1 memory exception)
-    parameter integer unsigned rows = 4
+    parameter integer unsigned rows = 4,
+    parameter integer unsigned max_depth = 'h100
 ) (
     input logic clk,
     input logic reset,
@@ -92,7 +93,7 @@ logic [15:0] bot_addr;
 logic read_en;
 logic write_en;
 logic valid_access;
-logic below_ep;
+logic stack_valid;
 always_ff @(posedge clk) begin
     if (reset) begin
         //ep_vec[id] <= '{default: '0};
@@ -112,7 +113,11 @@ always_ff @(posedge clk) begin
     current_map <= mpu_addr_map[id];
     last_prio <= interrupt_prio;
     
-    below_ep = addr < ep;
+
+end
+
+always_comb begin
+    stack_valid = (addr < ep) && (addr > (ep - max_depth));
     valid_access = 0;
     
     for (integer k = 0; k < rows; k++ ) begin
@@ -126,16 +131,11 @@ always_ff @(posedge clk) begin
                 OP_STORE: valid_access |= write_en;
                 default: valid_access = 0;
             endcase 
-            //break;
         end   
     end
     
-    
-    mem_fault_out <= (!(below_ep == valid_access)) && ((op == OP_LOAD) || (op == OP_STORE));
-end
-
-always_comb begin
-
+    mem_fault_out = !(valid_access | stack_valid) && (op == OP_LOAD || op == OP_STORE);
+    //mem_fault_out = (!(below_ep == valid_access)) && ((op == OP_LOAD) || (op == OP_STORE));
 
     //valid_access = valid_arr != 0;
     //mem_fault_out = (below_ep || !valid_access) && ((op == OP_LOAD) || (op == OP_STORE));

@@ -32,7 +32,8 @@ init:
         j exit
         nop
 tsk0:
-        lw      t0, -4(sp)
+        nop
+        lw      t0, 4(sp)     # access outside of own stack
         jr      ra
         nop
 terminated:

@@ -37,8 +37,8 @@ init:
         nop
 tsk0:
         li      t1, 0x400
-        lw      t0, 0(t1)
-        sw      t0, 0(t1)
+        lw      t0, 0(t1)       # access within allowed region
+        sw      t0, 0(t1)       # access within allowed region
         jr      ra
         nop
 terminated:

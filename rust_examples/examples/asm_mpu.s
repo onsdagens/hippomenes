@@ -1,14 +1,14 @@
 .option  norvc
 .text
-.section .init 
+.section .init
 # This test checks if an interrupt does not happens when accessing inside the tasks local stack.
 # EXPECTED BEHAVIOR:
 # writes terminated to uart if working correctly
 
-init:   
+init:
         nop     #hippo skipps first instruction for some reason
         la      sp, _stack_start # set stack pointer
-        
+
         csrwi   0x300, 8                # enable global interrupts
 
         la      t1, _memexhandler
@@ -26,16 +26,15 @@ init:
         la      t1, terminated
         srl     t1, t1, 2
         csrw    0xB01, t1
-        la      t1,  0b0111 
+        la      t1,  0b0111
         csrw    0xB21, t1
 
         j exit
 tsk0:
-        
-        lw      t0, 0(sp) 
+        lw      t0, -4(sp)  # access within own stack
         jr      ra
 
-terminated:                  
+terminated:
         li      t1, 0x6D726574
         li      t2, 0x74616E69
         li      t3, 0x00006465
@@ -53,7 +52,7 @@ ed:     csrw    0x51, t3     # rightmost byte of t1 to UART
         jr       ra
         nop
 
-_memexhandler:    
+_memexhandler:
         li      t1, 0x5F6D656D
         li      t2, 0x00746E69
 
@@ -68,6 +67,6 @@ int:    csrw    0x51, t2     # rightmost byte of t1 to UART
         csrwi   0x347, 1
 
 exit:   j       exit
-.global 
+.global
 
 .rodata
