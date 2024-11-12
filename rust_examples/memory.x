@@ -2,6 +2,7 @@ MEMORY
 {
   FLASH : ORIGIN = 0x00000004, LENGTH = 4K
   RAM : ORIGIN = 0x50000000, LENGTH = 4K
+  KEYSTORE: ORIGIN = 0x50002000, LENGTH = 1K
 }
 
 REGION_ALIAS("REGION_TEXT", FLASH);
@@ -33,4 +34,8 @@ SECTIONS{
     . = ALIGN(4);
     __euninit = .;
   } > RAM
+  . = 0x50002000;
+  .keystore : {
+    KEEP(*(.keystore));
+  } > KEYSTORE
 }
