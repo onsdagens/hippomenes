@@ -81,7 +81,7 @@ module top_arty #(
   assign imem_width = debug_i ? BYTE : WORD;
 
   logic [IMemAddrWidth-1:0] imem_addr;
-  assign imem_addr = debug_i ? debug_addr_i : pc_reg_out[IMemAddrWidth-1:0];
+  assign imem_addr = debug_i ? debug_addr_i : pc_interrupt_mux_out[IMemAddrWidth-1:0];
 
   interleaved_memory #(
       .MEMORY_DEPTH_BYTES(4096),
