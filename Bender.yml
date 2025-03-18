@@ -1,0 +1,63 @@
+# A more detailed description of the manifest format `Bender.yml` can be found here:
+# https://github.com/pulp-platform/bender#manifest-format-benderyml
+
+package:
+  name: hippomenes
+  authors:
+    - "onsdagens <pawel.dzialo@ltu.se>"
+
+dependencies:
+  hippo-memory: {git: "https://github.com/onsdagens/hippo-memory", rev: "master"}
+sources:
+  - ./hdl/src/config_pkg.sv
+  - ./hdl/src/arty_pkg.sv
+  - ./hdl/src/core/decoder_pkg.sv
+  - ./hdl/src/mem_pkg.sv
+  - ./hdl/src/core/csr.sv
+  - ./hdl/src/core/reg_n.sv
+  - ./hdl/src/core/pc_branch_mux.sv
+  - ./hdl/src/core/pc_interrupt_mux.sv
+  - ./hdl/src/core/pc_adder.sv
+  - ./hdl/src/core/decoder.sv
+  - ./hdl/src/core/vcsr.sv
+  - ./hdl/src/core/wt_ctl.sv
+  - ./hdl/src/core/wt_mux.sv
+  - ./hdl/src/core/register_file.sv
+  - ./hdl/src/core/rf_stack.sv
+  - ./hdl/src/core/branch_logic.sv
+  - ./hdl/src/core/alu_a_mux.sv
+  - ./hdl/src/core/alu_b_mux.sv
+  - ./hdl/src/core/alu.sv
+  - ./hdl/src/core/mul.sv
+  - ./hdl/src/core/mono_timer.sv
+  - ./hdl/src/core/time_stamp.sv
+  - ./hdl/src/core/timer.sv
+  - ./hdl/src/core/stack.sv
+  - ./hdl/src/core/n_clic.sv
+  - ./hdl/src/core/wb_mux.sv
+  - ./hdl/src/core/wb_mem_mux.sv
+  - ./hdl/src/top_arty.sv
+
+  - target: vanilla
+    files: 
+    - ./hdl/src/top_arty.sv
+    - ./hdl/src/tb_top_arty.sv
+
+  - target: edf
+    files:
+    - ./hdl/src/tb_top_arty_edf.sv
+    - ./hdl/src/top_arty_edf.sv
+
+  - target: fpga
+    files:
+      - ./rust_examples/text_0.mem
+      - ./rust_examples/text_1.mem
+      - ./rust_examples/text_2.mem
+      - ./rust_examples/text_3.mem
+      - ./rust_examples/data_0.mem
+      - ./rust_examples/data_1.mem
+      - ./rust_examples/data_2.mem
+      - ./rust_examples/data_3.mem
+      - ./fpga/arty_top/arty.srcs/constrs_1/new/ARTY.xdc
+      - ./fpga/arty_top/arty.srcs/sources_1/ip/clk_wiz_0/clk_wiz_0.xci
+      - ./hdl/src/fpga_arty.sv

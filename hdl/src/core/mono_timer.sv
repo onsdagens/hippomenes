@@ -1,5 +1,5 @@
 // time_stamp
-`timescale 1ns / 1ps
+
 
 //  Monotonically increasing timer
 module mono_timer

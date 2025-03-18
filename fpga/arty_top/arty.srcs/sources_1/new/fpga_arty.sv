@@ -4,12 +4,10 @@
 // This is just illustrative
 module fpga_arty (
     input sysclk,
+    
     output logic [3:0] led,
-
     output logic [3:0] led_r,
-
     output logic [3:0] led_g,
-
     output logic [3:0] led_b,
 
     output logic rx,  // host
@@ -18,9 +16,6 @@ module fpga_arty (
     input logic [1:0] sw,
 
     input logic [3:0] btn
-    // input logic btn1,
-    // input logic btn2,
-    // input logic btn3
 );
 
   logic clk;

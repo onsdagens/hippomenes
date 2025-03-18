@@ -7,3 +7,8 @@
 /fpga/hippomenes
 /fpga/arty/*
 /fpga/arty_top/*
+
+/vivado*
+/.bender
+/Bender.lock
+/build

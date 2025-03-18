@@ -1,5 +1,5 @@
 // tb_d_mem
-`timescale 1ns / 1ps
+
 
 module tb_d_mem;
   import arty_pkg::*;

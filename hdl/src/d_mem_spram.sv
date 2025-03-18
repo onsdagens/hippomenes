@@ -1,5 +1,5 @@
 // mem
-`timescale 1ns / 1ps
+
 
 module d_mem_spram
   import config_pkg::*;

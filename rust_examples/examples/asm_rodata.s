@@ -34,4 +34,5 @@ rodata: .word 0x70706968
         .word 0x2121216F
         .word 0x74726175
 led:    .word 0x00000001
+        .word 0x13371337
 

@@ -5,7 +5,6 @@
 // Read         A readable register
 // Write        A writable register
 
-`timescale 1ns / 1ps
 
 module csr
   import config_pkg::*;

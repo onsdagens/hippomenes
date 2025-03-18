@@ -1,15 +1,29 @@
 // top_arty
-`timescale 1ns / 1ps
+
 
 import config_pkg::*;
 import arty_pkg::*;
 import decoder_pkg::*;
 import mem_pkg::*;
 
-module top_arty (
-    input  logic clk,
-    input  logic reset,
-    input  BtnT  btn,
+module top_arty #(
+    parameter string INIT_B0_IMEM = "",
+    parameter string INIT_B1_IMEM = "",
+    parameter string INIT_B2_IMEM = "",
+    parameter string INIT_B3_IMEM = "",
+    parameter string INIT_B0_DMEM = "",
+    parameter string INIT_B1_DMEM = "",
+    parameter string INIT_B2_DMEM = "",
+    parameter string INIT_B3_DMEM = ""
+) (
+    input logic clk,
+    input logic reset,
+    input BtnT  btn,
+
+    input logic debug_i,
+    input logic [IMemAddrWidth-1:0] debug_addr_i,
+    input logic [7:0] debug_data_i,
+
     output LedT  led,
     output logic tx
     // TODO: gpio
@@ -62,27 +76,33 @@ module top_arty (
   // instruction memory
   word imem_data_out;
 
-`ifdef VERILATOR
-  rom imem (
-      // in
-      .clk(clk),
-      .address(pc_reg_out[IMemAddrWidth-1:0]),
-      // out
-      .data_out(imem_data_out)
+
+  mem_width_t imem_width;
+  assign imem_width = debug_i ? BYTE : WORD;
+
+  logic [IMemAddrWidth-1:0] imem_addr;
+  assign imem_addr = debug_i ? debug_addr_i : pc_reg_out[IMemAddrWidth-1:0];
+
+  interleaved_memory #(
+      .MEMORY_DEPTH_BYTES(4096),
+      .INIT_FILE_B0(INIT_B0_IMEM),
+      .INIT_FILE_B1(INIT_B1_IMEM),
+      .INIT_FILE_B2(INIT_B2_IMEM),
+      .INIT_FILE_B3(INIT_B3_IMEM)
+  ) imem (
+      .clk_i(clk),
+      .rst_i(reset),
+
+      .width_i(imem_width),
+      .sign_extend_i('0),
+      .addr_i(imem_addr),
+
+      .data_i(debug_data_i),
+      .write_enable_i(debug_i),
+
+      .data_o(imem_data_out)
   );
-`else
-  spram imem (
-      // in
-      .clk(clk),
-      // used with 1-cycle latency spram read
-      .address(pc_interrupt_mux_out[IMemAddrWidth-1:0]),
-      // used with combinational 0-cycle latency spram read
-      // .address(pc_reg_out[IMemAddrWidth-1:0]),
-      .reset,
-      // out
-      .data_out(imem_data_out)
-  );
-`endif
+
 
   // decoder
   wb_mux_t decoder_wb_mux_sel;
@@ -288,28 +308,57 @@ module top_arty (
       .op(decoder_alu_op),
       .res(alu_res)
   );
- // word mul_res;
- /* mul mul (
+  // word mul_res;
+  /* mul mul (
       .a  (alu_a_mux_out),
       .b  (alu_b_mux_out),
       .op (decoder_mul_op),
       .res(mul_res)
   );
 */
-  word  dmem_data_out;
+  word dmem_data_out;
   logic dmem_alignment_error;
-  d_mem_spram dmem (
-      // in
-      .clk(clk),
-      .reset,
-      .addr(alu_res[DMemAddrWidth-1:0]),
-      .width(decoder_dmem_width),
-      .sign_extend(decoder_dmem_sign_extend),
-      .write_enable(decoder_dmem_write_enable),
-      .data_in(rs2_wt_mux_out),
-      // out
-      //.data_temp(dmem_data_out)
-      .data_out(dmem_data_out)
+  //  d_mem_spram dmem (
+  // in
+  //      .clk(clk),
+  //      .reset,
+  //      .addr(alu_res[DMemAddrWidth-1:0]),
+  //      .width(decoder_dmem_width),
+  //      .sign_extend(decoder_dmem_sign_extend),
+  //      .write_enable(decoder_dmem_write_enable),
+  //      .data_in(rs2_wt_mux_out),
+  // out
+  //.data_temp(dmem_data_out)
+  //      .data_out(dmem_data_out)
+  // );
+
+  mem_width_t dmem_width;
+  logic [DMemAddrWidth-1:0] dmem_addr;
+  logic dmem_sign_extend;
+  logic [31:0] dmem_data_in;
+  logic dmem_write_enable;
+
+  assign dmem_width = debug_i ? BYTE : decoder_dmem_width;
+  assign dmem_addr = debug_i ? debug_addr_i : alu_res[DMemAddrWidth-1:0];
+  assign dmem_sign_extend = debug_i ? '0 : decoder_dmem_sign_extend;
+  assign dmem_data_in = debug_i ? debug_data_i : rs2_wt_mux_out;
+  assign dmem_write_enable = debug_i ? '1 : decoder_dmem_write_enable;
+
+  interleaved_memory #(
+      .MEMORY_DEPTH_BYTES(4096),
+      .INIT_FILE_B0(INIT_B0_DMEM),
+      .INIT_FILE_B1(INIT_B1_DMEM),
+      .INIT_FILE_B2(INIT_B2_DMEM),
+      .INIT_FILE_B3(INIT_B3_DMEM)
+  ) dmem (
+      .clk_i(clk),
+      .rst_i(reset),
+      .width_i(dmem_width),
+      .sign_extend_i(dmem_sign_extend),
+      .addr_i(dmem_addr),
+      .data_i(dmem_data_in),
+      .write_enable_i(dmem_write_enable),
+      .data_o(dmem_data_out)
   );
 
   // led out
@@ -455,6 +504,7 @@ module top_arty (
       .reset(reset),
       .mono_timer(mono_timer_out)
   );
+  /*
   n_cobs_encoder enc (
       .clk_i(clk),
       .reset_i(reset),
@@ -493,7 +543,7 @@ module top_arty (
       .tx,
       .next(uart_ack_out)
   );
-
+*/
   word csr_out;
   // match CSR addresses
   always_comb begin
