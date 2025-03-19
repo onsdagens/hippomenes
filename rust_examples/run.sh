@@ -1,8 +1,2 @@
 #!/bin/bash
-elf2mem -f $1
-        
-cd ..
-make verilate
-make simv
-make wave
-        
+        hippo-programmer --elf $1 --imem-start=0x0 --imem-size=4096 --dmem-start=0x50000000 --dmem-size=4096

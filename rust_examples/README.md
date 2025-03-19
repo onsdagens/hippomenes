@@ -25,27 +25,35 @@ Hippomenes implements the ``riscv32i`` instruction set, so to compile for Hippom
 ```shell
 rustup target add riscv32i-unknown-none-elf
 ```
+
+### Simulation specific
+
 With the Rust toolchain set up, ``elf2mem`` can be installed by cloning the ``elf2mem`` repository, and installing the tool via ``cargo``:
 
 ```shell
-git clone git@github.com:perlindgren/elf2mem.git
+git clone git@github.com:onsdagens/elf2mem.git
 ```
 
 ```shell
 cargo install --path ./elf2mem
 ```
 
-To reprogram the FPGA, we use ``openFPGALoader``. On Arch Linux, this comes nicely packaged in the AUR.
+By default, we use Verilator to simulate Hippomenes, for instructions, refer to the [Verilator page](https://verilator.org/guide/latest/install.html)
+
+### FPGA specific
+
+With the Rust toolchain set up, we use ``hippo-progammer`` to program the device. ``hippo-programmer`` can be installed by cloning the ``hippo-host`` repository, and installing the tool via ``cargo``:
 
 
 ```shell
-yay -S openFPGALoader-git
+git clone git@github.com:onsdagens/hippo-host.git
 ```
 
-For other distros, pre-built release binaries are available on [GitHub](https://github.com/trabucayre/openFPGALoader/releases). Running under Windows is also possible, albeit more involved, consult the excellent guide [here](https://fpga.mit.edu/6205/F22/documentation/openFPGA).
+```shell
+cargo install --path ./hippo-tools/hippo-programmer
+```
 
-
-The final prerequisite for using the default workflow is Vivado. Make sure to also add the Vivado bin path (typically ``/home/<USER>/.local/bin/Xilinx/Vivado/<VERSION>/bin``) to your `PATH` variable, we use the Vivado `updatemem` CLI to replace the Block RAM on the fly.
+The final prerequisite for using the default FPGA workflow is Vivado. Make sure to also add the Vivado bin path (typically ``/home/<USER>/.local/bin/Xilinx/Vivado/<VERSION>/bin``) to your `PATH` variable, we use the Vivado `updatemem` CLI to replace the Block RAM on the fly.
 
 ## Compiling
 
@@ -61,12 +69,19 @@ To dump the generated binary as a SystemVerilog ``.mem`` file use:
 elf2mem -f ./target/riscv32i-unknown-none-elf/release/examples/<EXAMPLE> -t binary.mem 
 ```
 
-To resynthesize, and replace the Hippomenes memory component, and reprogram your Arty board under Linux or Windows, the ``../fpga/program_arty.sh`` and ``../fpga/program_arty.cmd`` scripts can be used respectively.
+## Running the examples
 
-Under Linux, all of the above steps can be performed via the runner, so running one of the examples on your board amounts to
+### Simulation
 
+This repo comes with convenience scripts in ``build.rs``. To simulate Hippomenes running and example using Verilator, run:
 ```shell
 cargo run --example <EXAMPLE> --release
+```
+### FPGA
+
+Assuming you have synthesized and flashed Hippomenes to a Digilent Arty A7 board, and it is connected, you can program Hippomenes by running
+```shell
+cargo run --example <EXAMPLE> --release --features=fpga
 ```
 
 ## The examples
