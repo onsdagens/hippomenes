@@ -2,7 +2,7 @@
             .text
             .section .init
 # EXPECTED BEHAVIOR
-# hippo!!! should be written to UART every .25s at @20MHz
+# hippo!!! should be written to UART and the LED should blink every .25s at @20MHz
 init:       la      sp, _stack_start        # set stack pointer
            
 main:      
@@ -34,5 +34,4 @@ rodata: .word 0x70706968
         .word 0x2121216F
         .word 0x74726175
 led:    .word 0x00000001
-        .word 0x13371337
 

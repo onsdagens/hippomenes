@@ -15,7 +15,7 @@ module fpga_arty (
     output logic rx,  // host 
     input  logic tx,  // host
 
-    input logic [1:0] sw,
+    input logic [2:0] sw,
 
     input logic [3:0] btn
     // input logic btn1,
@@ -50,21 +50,42 @@ module fpga_arty (
   //assign led_r[0]   = 0;
   assign led_r[1] = 0;
   assign led_r[2] = 0;
-  assign led_r[3] = 0;
+  //assign led_r[3] = 0;
 
   assign led_g[0] = 0;
   assign led_g[1] = 0;
   assign led_g[2] = 0;
-  assign led_g[3] = 0;
 
   assign led_b[0] = 0;
   assign led_b[1] = 0;
   assign led_b[2] = 0;
   assign led_b[3] = 0;
 
-  always_comb begin
+  logic debug_active;
+  assign led_r[3] = debug_active;
+  logic [7:0] debug_data;
+  // we should make this parametric in the jtag...
+  logic [13:0] debug_addr;
+  jtag #(
+    .ADDR_WIDTH(14)
+  ) programmer (
+      .clk_i(clk),
+      .rst_i(tmp_sw1),
+      .we_o(debug_active),
+      .data_o(debug_data),
+      .write_addr_o(debug_addr)
+  );
 
-  end
+  // just zero-extend for now, this needs to be fixed....
+  logic [IMemAddrWidth-1:0] hippo_debug_addr;
+  assign hippo_debug_addr = {{(IMemAddrWidth - 14) {1'b0}}, debug_addr};
+
+  // this shouldn't be hard coded either
+  logic hippo_debug_imem;
+  assign hippo_debug_imem = (debug_addr < 4096);
+
+  logic hippo_debug_reset;
+  assign hippo_debug_reset = debug_active | tmp_sw1;
 
   top_arty #(
       .INIT_B0_IMEM("./text_0.mem"),
@@ -77,13 +98,25 @@ module fpga_arty (
       .INIT_B3_DMEM("./data_3.mem")
   ) hippo (
       .clk,
-      .reset(tmp_sw1),
-      .btn(btn),
+      // this should be a physical reset OR debug signal
+      // making sure everything resets whenever we reflash
+      .reset(hippo_debug_reset | sw[2]),
+      // input
+      .btn  (btn),
+
+      // programming interface
+      .debug_i(debug_active),
+      .debug_addr_i(hippo_debug_addr),
+      .debug_data_i(debug_data),
+      // this is high when we are targetting instruction memory.
+      // otherwise low (then it's data memory).
+      .debug_imem_i(hippo_debug_imem),
+      // this should be just the switch.
+      .debug_full_reset_i(tmp_sw1),
+
+      // output
       .led(led),
-      .tx(rx)
-      // .gpio_in({led1, rx, tx}),
-      // .gpio_out({led1, rx, tx}),
-      // .rx(tx),
+      .tx (rx)
   );
 
   clk_wiz_0 clk_gen (

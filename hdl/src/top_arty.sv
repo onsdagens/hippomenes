@@ -23,6 +23,8 @@ module top_arty #(
     input logic debug_i,
     input logic [IMemAddrWidth-1:0] debug_addr_i,
     input logic [7:0] debug_data_i,
+    input logic debug_imem_i,
+    input logic debug_full_reset_i,
 
     output LedT  led,
     output logic tx
@@ -91,14 +93,14 @@ module top_arty #(
       .INIT_FILE_B3(INIT_B3_IMEM)
   ) imem (
       .clk_i(clk),
-      .rst_i(reset),
+      .rst_i(debug_full_reset_i),
 
       .width_i(imem_width),
       .sign_extend_i('0),
       .addr_i(imem_addr),
 
       .data_i(debug_data_i),
-      .write_enable_i(debug_i),
+      .write_enable_i(debug_i && debug_imem_i),
 
       .data_o(imem_data_out)
   );
@@ -339,10 +341,10 @@ module top_arty #(
   logic dmem_write_enable;
 
   assign dmem_width = debug_i ? BYTE : decoder_dmem_width;
-  assign dmem_addr = debug_i ? debug_addr_i : alu_res[DMemAddrWidth-1:0];
+  assign dmem_addr = debug_i ? (debug_addr_i - 4096) : alu_res[DMemAddrWidth-1:0];
   assign dmem_sign_extend = debug_i ? '0 : decoder_dmem_sign_extend;
   assign dmem_data_in = debug_i ? debug_data_i : rs2_wt_mux_out;
-  assign dmem_write_enable = debug_i ? '1 : decoder_dmem_write_enable;
+  assign dmem_write_enable = debug_i ? !debug_imem_i : decoder_dmem_write_enable;
 
   interleaved_memory #(
       .MEMORY_DEPTH_BYTES(4096),
@@ -352,7 +354,7 @@ module top_arty #(
       .INIT_FILE_B3(INIT_B3_DMEM)
   ) dmem (
       .clk_i(clk),
-      .rst_i(reset),
+      .rst_i(debug_full_reset_i),
       .width_i(dmem_width),
       .sign_extend_i(dmem_sign_extend),
       .addr_i(dmem_addr),

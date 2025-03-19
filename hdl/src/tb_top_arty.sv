@@ -30,6 +30,8 @@ module tb_top_arty;
       .debug_i('0),
       .debug_addr_i('0),
       .debug_data_i('0),
+      .debug_imem_i('0),
+      .debug_full_reset_i(reset),
       // out
       .led,
       .tx

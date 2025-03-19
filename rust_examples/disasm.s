@@ -1,110 +1,41 @@
-warning: unused variable: `app`
-   --> /home/pawel/hippomenes/rtic/rtic-macros/src/codegen/bindings/riscvclic.rs:184:9
-    |
-184 |         app: &App,
-    |         ^^^ help: if this is intentional, prefix it with an underscore: `_app`
-    |
-    = note: `#[warn(unused_variables)]` on by default
-
-warning: unused variable: `analysis`
-   --> /home/pawel/hippomenes/rtic/rtic-macros/src/codegen/bindings/riscvclic.rs:185:9
-    |
-185 |         analysis: &CodegenAnalysis,
-    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
-
-warning: unused variable: `dispatcher_name`
-   --> /home/pawel/hippomenes/rtic/rtic-macros/src/codegen/bindings/riscvclic.rs:186:9
-    |
-186 |         dispatcher_name: Ident,
-    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dispatcher_name`
-
-warning: unused variable: `lt`
-   --> /home/pawel/hippomenes/rtic/rtic-macros/src/codegen/module.rs:106:9
-    |
-106 |     let lt = if ctxt.has_shared_resources(app) {
-    |         ^^ help: if this is intentional, prefix it with an underscore: `_lt`
-
-warning: 4 warnings emitted
-
-warning: unused variable: `priority`
-  --> /home/pawel/hippomenes/rtic/rtic/src/export/riscv_clic.rs:11:15
-   |
-11 | pub fn run<F>(priority: u8, f: F)
-   |               ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_priority`
-   |
-   = note: `#[warn(unused_variables)]` on by default
-
-warning: unused variable: `int`
-  --> /home/pawel/hippomenes/rtic/rtic/src/export/riscv_clic.rs:80:27
-   |
-80 | pub fn pend<T: Interrupt>(int: T) {
-   |                           ^^^ help: if this is intentional, prefix it with an underscore: `_int`
-
-warning: unused variable: `int`
-  --> /home/pawel/hippomenes/rtic/rtic/src/export/riscv_clic.rs:85:29
-   |
-85 | pub fn unpend<T: Interrupt>(int: T) {
-   |                             ^^^ help: if this is intentional, prefix it with an underscore: `_int`
-
-warning: unused variable: `int`
-  --> /home/pawel/hippomenes/rtic/rtic/src/export/riscv_clic.rs:89:29
-   |
-89 | pub fn enable<T: Interrupt>(int: T, prio: u8) {
-   |                             ^^^ help: if this is intentional, prefix it with an underscore: `_int`
-
-warning: 4 warnings emitted
-
-warning: fields `pin`, `timer`, and `rate` are never read
-  --> /home/pawel/hippomenes/hippomenes-core/hippomenes-hal/src/lib.rs:15:5
-   |
-14 | pub struct UART<T> {
-   |            ---- fields in this struct
-15 |     pin: T,
-   |     ^^^
-16 |     timer: Timer,
-   |     ^^^^^
-17 |     rate: u32,
-   |     ^^^^
-   |
-   = note: `#[warn(dead_code)]` on by default
-
-warning: 1 warning emitted
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `zmmul`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
 
 
-asm_timer_task:	file format elf32-littleriscv
+asm_rodata:	file format elf32-littleriscv
 
 Disassembly of section .text:
 
 00000000 <init>:
-       0: 17 01 01 00  	auipc	sp, 0x10
-       4: 13 01 01 50  	addi	sp, sp, 0x500
+       0: 50001117     	auipc	sp, 0x50001
+       4: 00010113     	mv	sp, sp
 
-00000008 <.Lpcrel_hi1>:
-       8: 97 02 00 50  	auipc	t0, 0x50000
-       c: 93 82 82 ff  	addi	t0, t0, -0x8
-      10: 23 a0 02 00  	sw	zero, 0x0(t0)
+00000008 <main>:
+       8: 50000397     	auipc	t2, 0x50000
+       c: 00438393     	addi	t2, t2, 0x4
+      10: 0003a283     	lw	t0, 0x0(t2)
+      14: 00029073     	csrw	0x0, t0
+      18: 0012c293     	xori	t0, t0, 0x1
+      1c: 0053a023     	sw	t0, 0x0(t2)
 
-00000014 <main>:
-      14: 73 50 04 30  	csrwi	mstatus, 0x8
-      18: 17 03 00 00  	auipc	t1, 0x0
-      1c: 13 03 43 02  	addi	t1, t1, 0x24
-      20: 13 53 23 00  	srli	t1, t1, 0x2
-      24: 73 10 03 b0  	csrw	mcycle, t1
-      28: 93 03 00 0f  	li	t2, 0xf0
-      2c: 73 90 03 40  	csrw	0x400, t2
-      30: 13 03 e0 00  	li	t1, 0xe
-      34: 73 10 03 b2  	csrw	0xb20, t1
+00000020 <.Lpcrel_hi2>:
+      20: 50000297     	auipc	t0, 0x50000
+      24: fe028293     	addi	t0, t0, -0x20
 
-00000038 <stop>:
-      38: 6f 00 00 00  	j	0x38 <stop>
+00000028 <loop>:
+      28: 0002a303     	lw	t1, 0x0(t0)
+      2c: 05131073     	csrw	0x51, t1
+      30: 00128293     	addi	t0, t0, 0x1
+      34: fe729ae3     	bne	t0, t2, 0x28 <loop>
+      38: 004c5eb7     	lui	t4, 0x4c5
+      3c: b40e8e93     	addi	t4, t4, -0x4c0
 
-0000003c <isr_0>:
-      3c: 97 02 00 50  	auipc	t0, 0x50000
-      40: 93 82 42 fc  	addi	t0, t0, -0x3c
-      44: 03 a3 02 00  	lw	t1, 0x0(t0)
-      48: 13 43 13 00  	xori	t1, t1, 0x1
-      4c: 73 10 03 00  	csrw	0x0, t1
-      50: 23 a0 62 00  	sw	t1, 0x0(t0)
-      54: 73 2e 00 b4  	csrr	t3, 0xb40
-      58: 23 a2 c2 01  	sw	t3, 0x4(t0)
-      5c: 67 80 00 00  	ret
+00000040 <loop2>:
+      40: fffe8e93     	addi	t4, t4, -0x1
+      44: fe0e9ee3     	bnez	t4, 0x40 <loop2>
+      48: fc1ff06f     	j	0x8 <main>
+
+0000004c <stop>:
+      4c: 0000006f     	j	0x4c <stop>
