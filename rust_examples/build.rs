@@ -20,7 +20,7 @@ make wave
 
     #[cfg(feature = "fpga")]
     file.write_all(
-        b"hippo-programmer --elf $1 --imem-start=0x0 --imem-size=4096 --dmem-start=0x50000000 --dmem-size=4096",
+        b"hippo-programmer --elf $1 --freq=14000 --imem-start=0x0 --imem-size=4096 --dmem-start=0x50000000 --dmem-size=4096",
     )
     .unwrap();
 }
